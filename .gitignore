@@ -1,7 +1,6 @@
 __pycache__/
 **/__pycache__/
 *.pyc
-models/*.pt
 cuda_install.log
 .venv/
 Datasets/
