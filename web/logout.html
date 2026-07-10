@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signing out — AgroVet</title>
+  <link rel="icon" href="/static/AgroVet_logo-main.png" type="image/png" />
+  <link rel="stylesheet" href="/static/styles.css?v=18">
+  <script src="/static/config.js?v=11"></script>
+  <script src="/static/i18n.js?v=11"></script>
+</head>
+<body class="auth-body" data-title-key="logout_title">
+  <div class="auth-shell">
+    <div class="auth-card auth-card-narrow">
+      <h1 data-i18n="logout_h1">Signing out...</h1>
+      <p class="auth-sub" data-i18n="logout_sub">Thanks for using AgroVet.</p>
+      <a href="/login" class="btn btn-primary btn-block" data-i18n="logout_login">Back to log in</a>
+      <a href="/" class="btn btn-secondary btn-block" data-i18n="logout_home">Continue as guest on home</a>
+    </div>
+  </div>
+  <script src="/static/auth.js?v=11"></script>
+  <script>
+    (function () {
+      var s = window.AgrovetAuth && window.AgrovetAuth.getSession();
+      if (s && s.token) {
+        var x = new XMLHttpRequest();
+        x.open("POST", (window.AGROVET_CONFIG && window.AGROVET_CONFIG.API_BASE || "") + "/api/auth/logout", true);
+        x.setRequestHeader("Authorization", "Bearer " + s.token);
+        x.send();
+      }
+      if (window.AgrovetAuth) window.AgrovetAuth.clearSession();
+      setTimeout(function () { window.location.href = "/login"; }, 1200);
+    })();
+  </script>
+</body>
+</html>

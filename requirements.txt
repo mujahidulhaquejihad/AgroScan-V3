@@ -1,0 +1,22 @@
+# Core DL (install the CUDA build separately, see README)
+torch
+torchvision
+
+# Training utilities
+numpy
+pillow
+scikit-learn
+tqdm
+matplotlib
+
+# Backend API (serves both the web app and the future mobile app)
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Optional: Hugging Face Bangladesh crop dataset download
+datasets
+huggingface_hub
+
+# Optional: server-side Google Sign-In verification
+google-auth

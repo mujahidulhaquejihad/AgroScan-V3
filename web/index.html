@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#067a42" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AgroVet - Smart Leaf Disease Detection</title>
+  <link rel="manifest" href="/static/manifest.json" />
+  <link rel="icon" href="/static/AgroVet_logo-main.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/static/AgroVet_logo-main.png" />
+  <link rel="stylesheet" href="/static/styles.css?v=19" />
+</head>
+<body data-title-key="page_title">
+  <a id="top"></a>
+  <div id="offlineBanner" class="offline-banner hidden">
+    <strong data-i18n="offline_title">Cannot reach the API.</strong>
+    <span data-i18n="offline_step1">1) Start server in terminal:</span>
+    <code>python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000</code>
+    <span data-i18n="offline_step2">2) Open exactly:</span> <a href="http://localhost:8000">http://localhost:8000</a>
+    <span data-i18n="offline_note">(Do not use VS Code Live Preview or open the HTML file directly.)</span>
+  </div>
+  <!-- ===================== HEADER ===================== -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#top" class="brand brand-logo-only" aria-label="AgroVet home">
+        <span class="logo-chip logo-chip-header">
+          <img src="/static/AgroVet_logo-main.png" alt="AgroVet" class="logo-img logo-img-white logo-img-brand" />
+        </span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#diagnose" data-i18n="nav_diagnose">Diagnose</a>
+        <a href="#emergency" data-i18n="nav_emergency">Emergency</a>
+        <a href="#resources" data-i18n="nav_resources">Resources</a>
+        <a href="#library" data-i18n="nav_library">Disease library</a>
+      </nav>
+      <div class="header-right">
+        <div class="header-tools">
+          <button id="langToggle" class="icon-btn" data-i18n-title="language" title="Language">বাংলা</button>
+          <button id="darkToggle" class="icon-btn" data-i18n-title="theme" title="Theme">&#127769;</button>
+        </div>
+        <span class="header-divider" aria-hidden="true"></span>
+        <span id="status" class="status pill">connecting&hellip;</span>
+        <div id="authArea" class="auth-area"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== 3-COLUMN LAYOUT ===================== -->
+  <div class="layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar left">
+      <div class="widget">
+        <h3 data-i18n="history">Recent diagnoses</h3>
+        <div id="historyList" class="hist-list"></div>
+        <button id="clearHistory" class="btn btn-link btn-sm" data-i18n="clear">Clear</button>
+      </div>
+      <div class="widget">
+        <h3 data-i18n="phototips">Photo tips</h3>
+        <ul class="tips">
+          <li data-i18n="phototip_1">Use a single leaf on a plain background.</li>
+          <li data-i18n="phototip_2">Good daylight, avoid shadows & blur.</li>
+          <li data-i18n="phototip_3">Fill the frame with the leaf.</li>
+        </ul>
+      </div>
+      <div class="widget">
+        <h3 data-i18n="quickdial">Quick dial</h3>
+        <a class="dial" href="tel:16123">&#128222; <span data-i18n="dial_krishi">16123 Krishi</span></a>
+        <a class="dial" href="tel:16358">&#128222; <span data-i18n="dial_vet">16358 Vet</span></a>
+        <a class="dial danger" href="tel:999">&#128222; <span data-i18n="dial_emergency">999 Emergency</span></a>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <main class="center">
+      <section class="hero" id="diagnose">
+        <div class="hero-text">
+          <h2 data-i18n="hero_title">Diagnose a plant leaf in seconds</h2>
+          <p data-i18n-html="hero_sub_html">Upload a leaf photo. We first confirm it's a leaf, then analyse it with <strong>EfficientNet-B3</strong> and give you a diagnosis with treatment advice.</p>
+        </div>
+        <div class="uploader" id="dropzone">
+          <input type="file" id="fileInput" accept="image/*,.jpg,.jpeg,.png,.webp,.bmp"
+            onchange="window.agrovetPickFile && window.agrovetPickFile(this)" />
+          <input type="file" id="cameraInput" class="visually-hidden" accept="image/*" capture="environment"
+            onchange="window.agrovetPickFile && window.agrovetPickFile(this)" />
+          <div class="drop-inner">
+            <label class="preview-wrap" for="fileInput" id="uploadLabel">
+              <img id="preview" alt="" />
+              <div id="placeholder" class="placeholder">
+                <span class="big">&#128247;</span>
+                <p class="drop-desktop"><span data-i18n="drop_hint">Drop a leaf photo here or</span>
+                  <span class="link" data-i18n="browse">browse</span></p>
+                <p class="drop-mobile muted" data-i18n="mobile_drop_hint">Tap below to photograph or choose a leaf image</p>
+              </div>
+            </label>
+            <div class="mobile-upload-actions">
+              <button type="button" id="cameraBtn" class="btn btn-primary btn-touch">
+                <span class="btn-icon">&#128248;</span>
+                <span data-i18n="mobile_take_photo">Take photo</span>
+              </button>
+              <button type="button" id="galleryBtn" class="btn btn-secondary btn-touch">
+                <span class="btn-icon">&#128444;</span>
+                <span data-i18n="mobile_gallery">Choose from gallery</span>
+              </button>
+            </div>
+            <p id="fileName" class="file-name muted small hidden"></p>
+            <button type="button" id="analyzeBtn" class="btn btn-primary btn-lg btn-touch" disabled data-i18n="analyze">Analyze</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="loader" class="loader hidden"><div class="spinner"></div><p data-i18n="running">Analysing with EfficientNet-B3...</p></div>
+      <div id="errorBox" class="error hidden"></div>
+
+      <section id="results" class="results hidden">
+        <div id="lowConfAlert" class="low-conf-alert hidden"></div>
+        <div id="resultActions" class="result-actions hidden">
+          <button id="listenBtn" class="btn btn-ghost btn-sm" data-i18n="listen">Listen</button>
+          <button id="downloadBtn" class="btn btn-ghost btn-sm" data-i18n="download">Download report</button>
+          <button id="shareBtn" class="btn btn-ghost btn-sm" data-i18n="share">Share</button>
+        </div>
+        <div class="card stage" id="stage1Card">
+          <div class="card-head"><span class="step" data-i18n="stage1">Stage 1</span><h2 data-i18n="leaf_check">Leaf check</h2></div>
+          <div id="stage1Body" class="card-body"></div>
+        </div>
+        <div class="card stage best hidden" id="bestCard">
+          <div class="card-head"><span class="step" data-i18n="verdict">Verdict</span><h2 data-i18n="best_answer">Diagnosis (EfficientNet-B3)</h2></div>
+          <div id="bestBody" class="card-body"></div>
+        </div>
+        <div class="card stage hidden" id="adviceCard">
+          <div class="card-head"><span class="step" data-i18n="advice">Advice</span><h2 data-i18n="treat_prevent">Treatment & prevention</h2></div>
+          <div id="adviceBody" class="card-body"></div>
+        </div>
+        <div class="card stage hidden" id="modelsCard">
+          <div class="card-head"><span class="step" data-i18n="stage2">Stage 2</span><h2 data-i18n="per_model">Per-model results</h2></div>
+          <div id="modelsBody" class="models-grid"></div>
+        </div>
+      </section>
+
+      <section id="emergency" class="emergency">
+        <div class="emergency-head">
+          <h2>&#128680; <span data-i18n="emergency_title">Emergency? Call a vet / agriculture officer</span></h2>
+          <p data-i18n="emergency_sub">If your crop or livestock is in danger, reach a specialist right away.</p>
+        </div>
+        <div id="emergencyGrid" class="emergency-grid"></div>
+      </section>
+
+      <section id="resources" class="resources-hub">
+        <div class="resources-hero card">
+          <div class="resources-hero-main">
+            <span class="resources-badge" data-i18n="resources_badge">Official Bangladesh</span>
+            <h2 data-i18n="resources_title">Government agriculture resources</h2>
+            <p data-i18n="resources_sub">Trusted ministries, extension offices, research institutes and digital portals — all in one place.</p>
+          </div>
+          <div class="resources-stats">
+            <div class="res-stat">
+              <strong id="govCount">8</strong>
+              <span data-i18n="resources_stat_portals">Official portals</span>
+            </div>
+            <div class="res-stat">
+              <strong>24/7</strong>
+              <span data-i18n="resources_stat_online">Online access</span>
+            </div>
+            <div class="res-stat">
+              <strong>16123</strong>
+              <span data-i18n="resources_stat_helpline">Krishi helpline</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="resources-toolbar">
+          <label class="gov-search-wrap">
+            <span class="gov-search-icon" aria-hidden="true">&#128269;</span>
+            <input id="govSearch" class="gov-search" type="search" autocomplete="off"
+              data-i18n-ph="resources_search_ph" placeholder="Search ministries, research, extension..." />
+          </label>
+          <div id="govFilters" class="gov-filters" role="tablist" aria-label="Filter resources">
+            <button type="button" class="gov-filter active" data-filter="all" data-i18n="resources_filter_all">All</button>
+            <button type="button" class="gov-filter" data-filter="ministry" data-i18n="resources_cat_ministry">Ministry</button>
+            <button type="button" class="gov-filter" data-filter="extension" data-i18n="resources_cat_extension">Extension</button>
+            <button type="button" class="gov-filter" data-filter="research" data-i18n="resources_cat_research">Research</button>
+            <button type="button" class="gov-filter" data-filter="livestock" data-i18n="resources_cat_livestock">Livestock</button>
+            <button type="button" class="gov-filter" data-filter="digital" data-i18n="resources_cat_digital">Digital</button>
+            <button type="button" class="gov-filter" data-filter="inputs" data-i18n="resources_cat_inputs">Inputs</button>
+          </div>
+        </div>
+
+        <div id="govGrid" class="gov-grid"></div>
+        <p id="govEmpty" class="gov-empty hidden" data-i18n="resources_empty">No matching resources. Try another filter or search term.</p>
+      </section>
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar right">
+      <div class="widget">
+        <h3 data-i18n="weather">Weather & spraying</h3>
+        <div id="weatherBody"><button id="loadWeather" class="btn btn-ghost btn-sm" data-i18n="weather_enable">Enable location for spraying advice</button></div>
+      </div>
+      <div class="widget">
+        <h3 data-i18n="crop_calendar">Crop season</h3>
+        <div id="calendarBody"></div>
+      </div>
+      <div class="widget tip">
+        <h3 data-i18n="daily_tip">Tip of the day</h3>
+        <p id="tipBody"></p>
+      </div>
+      <div class="widget" id="library">
+        <h3 data-i18n="library_title">Disease library</h3>
+        <input id="libSearch" class="lib-search" type="text" data-i18n-ph="library_ph" placeholder="Search a disease..." />
+        <div id="libList" class="lib-list"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer">
+    <div class="footer-cols">
+      <div>
+        <div class="brand footer-brand brand-logo-only">
+          <span class="logo-chip logo-chip-footer">
+            <img src="/static/AgroVet_logo-main.png" alt="AgroVet" class="logo-img logo-img-white logo-img-footer" />
+          </span>
+        </div>
+        <p class="muted small" data-i18n="footer_about">AI-assisted plant leaf disease detection for farmers in Bangladesh.</p>
+      </div>
+      <div>
+        <h4 data-i18n="footer_explore">Explore</h4>
+        <a href="#diagnose" data-i18n="nav_diagnose">Diagnose</a>
+        <a href="#emergency" data-i18n="nav_emergency">Emergency</a>
+        <a href="#resources" data-i18n="nav_resources">Resources</a>
+      </div>
+      <div>
+        <h4 data-i18n="footer_helplines">Helplines</h4>
+        <a href="tel:16123" data-i18n="footer_krishi">Krishi Call Center: 16123</a>
+        <a href="tel:16358" data-i18n="footer_vet">Vet Helpline: 16358</a>
+        <a href="tel:999" data-i18n="footer_emergency">Emergency: 999</a>
+      </div>
+      <div>
+        <h4 data-i18n="footer_dev">For developers</h4>
+        <code>POST /api/predict</code><br /><code>POST /api/chat</code>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span id="year"></span> AgroVet</span>
+      <span class="muted small" data-i18n="disclaimer">Advice is general guidance, not a substitute for a qualified plant doctor / vet.</span>
+    </div>
+  </footer>
+
+  <!-- ===================== MOBILE BOTTOM NAV ===================== -->
+  <nav class="mobile-bottom-nav" aria-label="Main navigation">
+    <a href="#diagnose" class="mob-nav-item active" data-section="diagnose">
+      <span class="mob-icon" aria-hidden="true">&#128300;</span>
+      <span data-i18n="nav_diagnose">Diagnose</span>
+    </a>
+    <a href="#emergency" class="mob-nav-item" data-section="emergency">
+      <span class="mob-icon" aria-hidden="true">&#128680;</span>
+      <span data-i18n="nav_emergency">Emergency</span>
+    </a>
+    <a href="#resources" class="mob-nav-item" data-section="resources">
+      <span class="mob-icon" aria-hidden="true">&#127963;</span>
+      <span data-i18n="nav_resources">Resources</span>
+    </a>
+    <a href="#library" class="mob-nav-item" data-section="library">
+      <span class="mob-icon" aria-hidden="true">&#128218;</span>
+      <span data-i18n="nav_more">More</span>
+    </a>
+  </nav>
+
+  <!-- ===================== CHATBOT ===================== -->
+  <button id="chatToggle" class="chat-toggle" data-i18n-aria="assistant" aria-label="assistant">&#128172;</button>
+  <div id="chatPanel" class="chat-panel hidden">
+    <div class="chat-head">
+      <span>&#127807; <span data-i18n="assistant">AgroVet Assistant</span></span>
+      <button id="chatClose" class="chat-close" data-i18n-aria="close" aria-label="Close">&times;</button>
+    </div>
+    <div id="chatLog" class="chat-log"></div>
+    <div id="chatChips" class="chat-chips"></div>
+    <form id="chatForm" class="chat-input">
+      <input id="chatText" type="text" autocomplete="off" data-i18n-ph="chat_ph" placeholder="Ask about a disease, treatment, vet..." />
+      <button class="btn btn-primary btn-sm" type="submit" data-i18n="send">Send</button>
+    </form>
+  </div>
+
+  <script src="/static/config.js?v=14"></script>
+  <script src="/static/i18n.js?v=14"></script>
+  <script src="/static/auth.js?v=14"></script>
+  <script src="/static/core.js?v=14"></script>
+  <script src="/static/features.js?v=14"></script>
+  <script src="/static/app-extra.js?v=14"></script>
+  <script src="/static/mobile.js?v=14"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "AgroVet",
+  "short_name": "AgroVet",
+  "description": "Smart plant leaf disease detection for farmers in Bangladesh",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f0fdf4",
+  "theme_color": "#067a42",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/static/AgroVet_logo-main.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

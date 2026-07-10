@@ -1,0 +1,12 @@
+services:
+  agrovet:
+    build: .
+    container_name: agrovet
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Keep models editable on the host without rebuilding
+      - ./models:/app/models:ro
+    environment:
+      - PYTHONUNBUFFERED=1

@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BD dataset: check access",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/download_bd_dataset.py",
+      "args": ["--check"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "BD dataset: test download (5 per class)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/download_bd_dataset.py",
+      "args": ["--max-per-class", "5"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "BD dataset: full download",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/download_bd_dataset.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "AgroVet: run web server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
